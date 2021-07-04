@@ -143,7 +143,6 @@ if __name__ == "__main__":
 
     for img in images:
         ts = get_exif_ts(img)
-        #print(img.path, ts, img.scene_capture_type)
 
         if (prev_ts + GROUP_TS_THRESHOLD) < ts:
             # this photo's timestamp is sufficiently in the future to start a new group
