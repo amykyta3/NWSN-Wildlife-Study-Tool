@@ -24,3 +24,5 @@ python3 analyzer.py PATH/TO/IMAGES
 Output is printed to your console where you can copy/paste into your excel sheet.
 
 Disclaimer: Entries will need to be adjusted based on actual wildlife observations!
+
+![usage](doc/usage.png)
