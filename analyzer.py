@@ -9,9 +9,6 @@ from typing import List
 import exif
 
 
-GROUP_TS_THRESHOLD = datetime.timedelta(minutes=30)
-
-
 def get_exif_ts(img: exif.Image) -> datetime.datetime:
     return datetime.datetime.strptime(img.datetime, r"%Y:%m:%d %H:%M:%S")
 
@@ -109,59 +106,57 @@ class WildlifeEvent:
 
         return columns
 
+#-------------------------------------------------------------------------------
+if __name__ == "__main__":
+    GROUP_TS_THRESHOLD = datetime.timedelta(minutes=30)
 
+    img_folder = sys.argv[1]
 
+    if not os.path.isdir(img_folder):
+        logging.error("Target path is not a directory: %s", img_folder)
+        sys.exit(1)
 
-img_folder = sys.argv[1]
-
-if not os.path.isdir(img_folder):
-    logging.error("Target path is not a directory: %s", img_folder)
-    sys.exit(1)
-
-# Load all images first
-images = [] # type: List[exif.Image]
-for path in os.listdir(img_folder):
-    path = os.path.join(img_folder, path)
-    if not os.path.isfile(path):
-        logging.warning("Skipping path: %s", path)
-        continue
-
-    with open(path, 'rb') as f:
-        img = exif.Image(f)
-        # monkey-patch the path into the image object for convenience
-        img.path = path
-        if not img.has_exif:
-            logging.warning("File is missing exif. Skipping: %s", path)
+    # Load all images first
+    images = [] # type: List[exif.Image]
+    for path in os.listdir(img_folder):
+        path = os.path.join(img_folder, path)
+        if not os.path.isfile(path):
+            logging.warning("Skipping path: %s", path)
             continue
-        images.append(img)
 
+        with open(path, 'rb') as f:
+            img = exif.Image(f)
+            # monkey-patch the path into the image object for convenience
+            img.path = path
+            if not img.has_exif:
+                logging.warning("File is missing exif. Skipping: %s", path)
+                continue
+            images.append(img)
 
+    # Sort images by timestamp
+    images.sort(key=lambda x: x.datetime)
 
-# Sort images by timestamp
-images.sort(key=lambda x: x.datetime)
+    # Create image groups
+    current_group_images = [] # type: List[exif.Image]
+    prev_ts = datetime.datetime(1,1,1)
+    wildlife_events = [] # type: List[WildlifeEvent]
 
-# Create image groups
-current_group_images = [] # type: List[exif.Image]
-prev_ts = datetime.datetime(1,1,1)
-wildlife_events = [] # type: List[WildlifeEvent]
+    for img in images:
+        ts = get_exif_ts(img)
+        #print(img.path, ts, img.scene_capture_type)
 
-for img in images:
-    ts = get_exif_ts(img)
-    #print(img.path, ts, img.scene_capture_type)
+        if (prev_ts + GROUP_TS_THRESHOLD) < ts:
+            # this photo's timestamp is sufficiently in the future to start a new group
+            if current_group_images:
+                wildlife_events.append(WildlifeEvent(current_group_images))
+                current_group_images = []
+        current_group_images.append(img)
+        prev_ts = ts
 
-    if (prev_ts + GROUP_TS_THRESHOLD) < ts:
-        # this photo's timestamp is sufficiently in the future to start a new group
-        if current_group_images:
-            wildlife_events.append(WildlifeEvent(current_group_images))
-            current_group_images = []
-    current_group_images.append(img)
-    prev_ts = ts
+    # collect last event
+    if current_group_images:
+        wildlife_events.append(WildlifeEvent(current_group_images))
 
-# collect last event
-if current_group_images:
-    wildlife_events.append(WildlifeEvent(current_group_images))
-
-
-# report events:
-for event in wildlife_events:
-    print("\t".join(event.get_report_row()))
+    # report events:
+    for event in wildlife_events:
+        print("\t".join(event.get_report_row()))
