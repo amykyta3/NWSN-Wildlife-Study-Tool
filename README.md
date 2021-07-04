@@ -18,7 +18,7 @@ with some columns pre-loaded.
 ## Usage
 
 ```
-./analyzer.py PATH/TO/IMAGES
+python3 analyzer.py PATH/TO/IMAGES
 ```
 
 Output is printed to your console where you can copy/paste into your excel sheet.
