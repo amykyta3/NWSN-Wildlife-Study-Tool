@@ -8,7 +8,7 @@ with some columns pre-loaded.
 
 ## Setup Instructions
 
-* Install Python 3.6 or newer: https://www.python.org/
+* Install Python 3.8 or newer: https://www.python.org/
 * Download or clone this repository
 * Install requirements:
     ```bash
