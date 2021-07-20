@@ -5,6 +5,7 @@ import sys
 import logging
 import datetime
 from typing import List
+import csv
 
 import exif
 
@@ -38,6 +39,26 @@ class WildlifeEvent:
         timestamp = self.first_ts.timestamp()
         timestamp = round(timestamp / 60) * 60
         return datetime.datetime.fromtimestamp(timestamp)
+
+    @staticmethod
+    def get_report_heading() -> List[str]:
+        return [
+            "initials",
+            "initials",
+            "camera id",
+            "date",
+            "time",
+            "duration",
+            "species",
+            "n individuals",
+            "certainty",
+            "n photos",
+            "activity",
+            "B&W/Color",
+            "direction",
+            "good?",
+            "comments",
+        ]
 
     def get_report_row(self) -> List[str]:
         """
@@ -82,7 +103,7 @@ class WildlifeEvent:
             columns.append("")
 
         # N Photos. Add parentheses to indicate user review
-        columns.append(f"({len(self.images)})")
+        columns.append(f"[{len(self.images)}]")
 
         # Skip: activity
         columns.append("")
@@ -157,5 +178,10 @@ if __name__ == "__main__":
         wildlife_events.append(WildlifeEvent(current_group_images))
 
     # report events:
-    for event in wildlife_events:
-        print("\t".join(event.get_report_row()))
+    with open("events.csv", "w") as f:
+        csvf = csv.writer(f)
+        csvf.writerow(WildlifeEvent.get_report_heading())
+        for event in wildlife_events:
+            csvf.writerow(
+                event.get_report_row()
+            )
