@@ -45,6 +45,7 @@ class Species(NoValueEnum):
 csv_file = sys.argv[1]
 
 sightings = {}
+sightings_time_of_day = {}
 min_date = datetime.datetime(2100, 1, 1)
 max_date = datetime.datetime(1970, 1, 1)
 
@@ -83,19 +84,45 @@ with open(csv_file, encoding="utf-8") as f:
         for _ in range(count):
             if species not in sightings:
                 sightings[species] = []
+                sightings_time_of_day[species] = []
             sightings[species].append(ts)
 
+            time = ts.time()
+            hour_frac = time.hour + time.minute / 60
+            sightings_time_of_day[species].append(hour_frac)
 
-delta = max_date - min_date
-bins = delta.days // 2
-only_species = [
-    Species.CALA,
-    Species.SYFL,
-    Species.LYRU,
+
+exclude_species = [
+    Species.COBR,
+    Species.COAU,
+    Species.MEME,
+    Species.PIMA,
+    Species.JUHY,
+    Species.DRPI,
+    Species.CYST,
+    Species.TUMI,
+    Species.FECA,
+    Species.HOSA,
+    Species.TADO,
+    Species.SCCA,
 ]
 
+# 24 Hour Histogram
+bins = 24
+
+for species, events in sightings_time_of_day.items():
+    if species in exclude_species:
+       continue
+    plt.hist(events, bins, alpha=0.5, label=species.value)
+plt.legend(loc='upper right')
+plt.show()
+
+
+# calendar histogram
+delta = max_date - min_date
+bins = delta.days // 5
 for species, events in sightings.items():
-    if species not in only_species:
+    if species in exclude_species:
         continue
     plt.hist(events, bins, alpha=0.5, label=species.value)
 plt.legend(loc='upper right')
